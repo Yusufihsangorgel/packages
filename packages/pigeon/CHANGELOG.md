@@ -1,3 +1,8 @@
+## 27.2.1
+
+* [swift] Fixes generated codec instances created with the default initializer
+  to use the generated reader and writer.
+
 ## 27.2.0
 
 * Adds support for empty data classes.

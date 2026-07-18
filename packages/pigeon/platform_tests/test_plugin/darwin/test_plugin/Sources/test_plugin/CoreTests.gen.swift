@@ -1158,7 +1158,11 @@ private class CoreTestsPigeonCodecReaderWriter: FlutterStandardReaderWriter {
 }
 
 class CoreTestsPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
-  static let shared = CoreTestsPigeonCodec(readerWriter: CoreTestsPigeonCodecReaderWriter())
+  override convenience init() {
+    self.init(readerWriter: CoreTestsPigeonCodecReaderWriter())
+  }
+
+  static let shared = CoreTestsPigeonCodec()
 }
 
 /// The core interface that each host language plugin must implement in

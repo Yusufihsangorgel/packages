@@ -373,7 +373,12 @@ class SwiftGenerator extends StructuredGenerator<InternalSwiftOptions> {
     // Generate Codec
     indent.write('class $codecName: FlutterStandardMessageCodec, @unchecked Sendable ');
     indent.addScoped('{', '}', () {
-      indent.writeln('static let shared = $codecName(readerWriter: $readerWriterName())');
+      indent.write('override convenience init() ');
+      indent.addScoped('{', '}', () {
+        indent.writeln('self.init(readerWriter: $readerWriterName())');
+      });
+      indent.newln();
+      indent.writeln('static let shared = $codecName()');
     });
     indent.newln();
     if (root.containsEventChannel) {

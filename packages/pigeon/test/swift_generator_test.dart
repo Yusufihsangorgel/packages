@@ -1335,6 +1335,7 @@ void main() {
     generator.generate(swiftOptions, root, sink, dartPackageName: DEFAULT_PACKAGE_NAME);
     final code = sink.toString();
     expect(code, contains(': FlutterStandardReader '));
+    expect(code, contains('override convenience init()'));
   });
 
   test('swift function signature', () {

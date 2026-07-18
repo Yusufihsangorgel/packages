@@ -10,6 +10,17 @@ import Testing
 struct ListTests {
 
   @Test
+  func newlyInitializedCodecRoundTripsCustomTypes() throws {
+    let message = TestMessage(testList: ["value"])
+    let codec = CoreTestsPigeonCodec()
+    let encoded = try #require(codec.encode(message))
+
+    let decoded = codec.decode(encoded) as? TestMessage
+
+    #expect(decoded == message)
+  }
+
+  @Test
   func listInList() async throws {
     let inside = TestMessage(testList: [1, 2, 3])
     let top = TestMessage(testList: [inside])

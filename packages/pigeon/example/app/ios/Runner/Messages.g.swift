@@ -292,7 +292,11 @@ private class MessagesPigeonCodecReaderWriter: FlutterStandardReaderWriter {
 }
 
 class MessagesPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
-  static let shared = MessagesPigeonCodec(readerWriter: MessagesPigeonCodecReaderWriter())
+  override convenience init() {
+    self.init(readerWriter: MessagesPigeonCodecReaderWriter())
+  }
+
+  static let shared = MessagesPigeonCodec()
 }
 
 /// Generated protocol from Pigeon that represents a handler of messages from Flutter.

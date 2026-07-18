@@ -633,7 +633,11 @@ private class ProxyApiTestsPigeonCodecReaderWriter: FlutterStandardReaderWriter 
 }
 
 class ProxyApiTestsPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
-  static let shared = ProxyApiTestsPigeonCodec(readerWriter: ProxyApiTestsPigeonCodecReaderWriter())
+  override convenience init() {
+    self.init(readerWriter: ProxyApiTestsPigeonCodecReaderWriter())
+  }
+
+  static let shared = ProxyApiTestsPigeonCodec()
 }
 
 protocol PigeonApiDelegateProxyApiTestClass {

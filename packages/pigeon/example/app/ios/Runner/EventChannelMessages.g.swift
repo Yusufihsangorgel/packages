@@ -254,8 +254,11 @@ private class EventChannelMessagesPigeonCodecReaderWriter: FlutterStandardReader
 }
 
 class EventChannelMessagesPigeonCodec: FlutterStandardMessageCodec, @unchecked Sendable {
-  static let shared = EventChannelMessagesPigeonCodec(
-    readerWriter: EventChannelMessagesPigeonCodecReaderWriter())
+  override convenience init() {
+    self.init(readerWriter: EventChannelMessagesPigeonCodecReaderWriter())
+  }
+
+  static let shared = EventChannelMessagesPigeonCodec()
 }
 
 var eventChannelMessagesPigeonMethodCodec = FlutterStandardMethodCodec(
