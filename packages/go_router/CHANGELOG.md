@@ -1,3 +1,8 @@
+## 17.3.1
+
+- Fixes pages on parent navigators being dropped when switching to a not yet
+  loaded branch of a `StatefulShellRoute`.
+
 ## 17.3.0
 
 - Updates minimum supported SDK version to Flutter 3.38/Dart 3.10.
