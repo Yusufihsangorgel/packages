@@ -49,6 +49,7 @@ class CupertinoTabView extends StatefulWidget {
     this.navigatorKey,
     this.defaultTitle,
     this.routes,
+    this.initialRoute,
     this.onGenerateRoute,
     this.onUnknownRoute,
     this.navigatorObservers = const <NavigatorObserver>[],
@@ -108,6 +109,29 @@ class CupertinoTabView extends StatefulWidget {
   /// This routing table is not shared with any routing tables of ancestor or
   /// descendant [Navigator]s.
   final Map<String, WidgetBuilder>? routes;
+
+  /// The name of the first route to show in this tab's [Navigator].
+  ///
+  /// Defaults to [Navigator.defaultRouteName] (`/`), which is built by [builder]
+  /// if it is specified.
+  ///
+  /// If the name starts with a slash, the [Navigator] also pushes any matching
+  /// routes for the leading segments of the path before pushing this route.
+  /// For example, `/a/b` starts with `/`, `/a`, and `/a/b`, if those routes exist.
+  /// Intermediate routes need not exist.
+  ///
+  /// If the route cannot be generated, [Navigator.defaultRouteName] is used
+  /// instead.
+  ///
+  /// Changing this value after the tab's [Navigator] is created has no effect
+  /// on its navigation stack.
+  ///
+  /// See also:
+  ///
+  ///  * [Navigator.initialRoute], which is used to implement this property.
+  ///  * [Navigator.defaultGenerateInitialRoutes], which explains how the
+  ///    initial routes are generated.
+  final String? initialRoute;
 
   /// The route generator callback used when the tab view is navigated to a named route.
   ///
@@ -186,6 +210,7 @@ class _CupertinoTabViewState extends State<CupertinoTabView> {
   Widget build(BuildContext context) {
     final Widget child = Navigator(
       key: _navigatorKey,
+      initialRoute: widget.initialRoute,
       onGenerateRoute: _onGenerateRoute,
       onUnknownRoute: _onUnknownRoute,
       observers: _navigatorObservers,

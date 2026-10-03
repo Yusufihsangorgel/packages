@@ -10,12 +10,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:leak_tracker_flutter_testing/leak_tracker_flutter_testing.dart';
 
 void main() {
-  testWidgets('Use home', (WidgetTester tester) async {
+  testWidgets('Use home when initialRoute is not specified', (WidgetTester tester) async {
     await tester.pumpWidget(
-      CupertinoApp(home: CupertinoTabView(builder: (BuildContext context) => const Text('home'))),
+      CupertinoApp(
+        home: CupertinoTabView(
+          builder: (BuildContext context) => const Text('home'),
+          routes: <String, WidgetBuilder>{
+            '/initial': (BuildContext context) => const Text('initial route'),
+          },
+        ),
+      ),
     );
 
     expect(find.text('home'), findsOneWidget);
+    expect(find.text('initial route'), findsNothing);
+    expect(
+      ModalRoute.of(tester.element(find.text('home')))!.settings.name,
+      Navigator.defaultRouteName,
+    );
   });
 
   testWidgets('Use routes', (WidgetTester tester) async {
@@ -28,6 +40,66 @@ void main() {
     );
 
     expect(find.text('first route'), findsOneWidget);
+  });
+
+  testWidgets('Use initialRoute with routes without a / route', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      CupertinoApp(
+        home: CupertinoTabView(
+          initialRoute: '/initial',
+          routes: <String, WidgetBuilder>{
+            '/initial': (BuildContext context) => const Text('initial route'),
+          },
+        ),
+      ),
+    );
+
+    expect(find.text('initial route'), findsOneWidget);
+  });
+
+  testWidgets('Preserves the initialRoute stack when updated and after push and pop', (
+    WidgetTester tester,
+  ) async {
+    final GlobalKey<NavigatorState> key = GlobalKey();
+    Widget buildApp(String initialRoute) {
+      return CupertinoApp(
+        home: CupertinoTabView(
+          navigatorKey: key,
+          initialRoute: initialRoute,
+          builder: (BuildContext context) => const Text('home'),
+          routes: <String, WidgetBuilder>{
+            '/a': (BuildContext context) => const Text('route a'),
+            '/a/b': (BuildContext context) => const Text('route b'),
+            '/next': (BuildContext context) => const Text('next route'),
+          },
+        ),
+      );
+    }
+
+    await tester.pumpWidget(buildApp('/a/b'));
+
+    expect(find.text('route b'), findsOneWidget);
+
+    unawaited(key.currentState!.pushNamed('/next'));
+    await tester.pumpAndSettle();
+    expect(find.text('next route'), findsOneWidget);
+
+    await tester.pumpWidget(buildApp('/a'));
+    await tester.pumpAndSettle();
+    expect(find.text('next route'), findsOneWidget);
+
+    key.currentState!.pop();
+    await tester.pumpAndSettle();
+    expect(find.text('route b'), findsOneWidget);
+
+    key.currentState!.pop();
+    await tester.pumpAndSettle();
+    expect(find.text('route a'), findsOneWidget);
+
+    key.currentState!.pop();
+    await tester.pumpAndSettle();
+    expect(find.text('home'), findsOneWidget);
+    expect(key.currentState!.canPop(), isFalse);
   });
 
   testWidgets('Use home and named routes', (WidgetTester tester) async {
