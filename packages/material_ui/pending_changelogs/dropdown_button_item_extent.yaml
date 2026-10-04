@@ -1,0 +1,3 @@
+changelog: |
+  - Adds `itemExtent` and `prototypeItem` to `DropdownButton` and `DropdownButtonFormField`.
+version: minor

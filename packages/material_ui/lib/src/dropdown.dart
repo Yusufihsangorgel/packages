@@ -374,6 +374,8 @@ class _DropdownMenuState<T> extends State<_DropdownMenu<T>> {
                       primary: true,
                       padding: kMaterialListPadding,
                       shrinkWrap: true,
+                      itemExtent: route.itemExtent,
+                      prototypeItem: route.prototypeItem,
                       children: children,
                     ),
                   ),
@@ -487,6 +489,8 @@ class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
     required this.style,
     this.barrierLabel,
     this.itemHeight,
+    this.itemExtent,
+    this.prototypeItem,
     this.menuWidth,
     this.dropdownColor,
     this.menuMaxHeight,
@@ -494,7 +498,12 @@ class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
     this.borderRadius,
     this.barrierDismissible = true,
     this.dropdownMenuItemMouseCursor,
-  }) : itemHeights = List<double>.filled(items.length, itemHeight ?? kMinInteractiveDimension);
+  }) : // The items' heights are not known until they are laid out. An itemExtent
+       // fixes them up front, so the initial scroll offset uses it as well.
+       itemHeights = List<double>.filled(
+         items.length,
+         itemExtent ?? itemHeight ?? kMinInteractiveDimension,
+       );
 
   final List<_MenuItem<T>> items;
   final EdgeInsetsGeometry padding;
@@ -504,6 +513,8 @@ class _DropdownRoute<T> extends PopupRoute<_DropdownRouteResult<T>> {
   final CapturedThemes capturedThemes;
   final TextStyle style;
   final double? itemHeight;
+  final double? itemExtent;
+  final Widget? prototypeItem;
   final double? menuWidth;
   final Color? dropdownColor;
   final double? menuMaxHeight;
@@ -1016,6 +1027,8 @@ class DropdownButton<T> extends StatefulWidget {
     this.isDense = false,
     this.isExpanded = false,
     this.itemHeight = kMinInteractiveDimension,
+    this.itemExtent,
+    this.prototypeItem,
     this.menuWidth,
     this.focusColor,
     this.focusNode,
@@ -1045,6 +1058,10 @@ class DropdownButton<T> extends StatefulWidget {
          'with the same value',
        ),
        assert(itemHeight == null || itemHeight >= kMinInteractiveDimension),
+       assert(
+         itemExtent == null || prototypeItem == null,
+         'You can only pass one of itemExtent and prototypeItem.',
+       ),
        isVerticallyExpanded = true,
        _inputDecoration = null,
        _isEmpty = false;
@@ -1066,6 +1083,8 @@ class DropdownButton<T> extends StatefulWidget {
     this.isDense = false,
     this.isExpanded = false,
     this.itemHeight = kMinInteractiveDimension,
+    this.itemExtent,
+    this.prototypeItem,
     this.focusColor,
     this.focusNode,
     this.autofocus = false,
@@ -1096,7 +1115,11 @@ class DropdownButton<T> extends StatefulWidget {
          'Either zero or 2 or more [DropdownMenuItem]s were detected '
          'with the same value',
        ),
-       assert(itemHeight == null || itemHeight >= kMinInteractiveDimension);
+       assert(itemHeight == null || itemHeight >= kMinInteractiveDimension),
+       assert(
+         itemExtent == null || prototypeItem == null,
+         'You can only pass one of itemExtent and prototypeItem.',
+       );
 
   /// The list of items the user can select.
   ///
@@ -1270,6 +1293,33 @@ class DropdownButton<T> extends StatefulWidget {
   /// offset is computed as if all of the menu item heights were
   /// [kMinInteractiveDimension].
   final double? itemHeight;
+
+  /// {@macro flutter.widgets.list_view.itemExtent}
+  ///
+  /// Here the children are the items of the dropdown menu. When this is
+  /// non-null it determines the height of every menu item, and it is also what
+  /// the menu uses to align the selected item with the dropdown button when it
+  /// opens, so [itemHeight] does not need to match it.
+  ///
+  /// Only one of [itemExtent] and [prototypeItem] can be specified.
+  final double? itemExtent;
+
+  /// {@macro flutter.widgets.list_view.prototypeItem}
+  ///
+  /// Here the children are the items of the dropdown menu. The prototype
+  /// is typically a [DropdownMenuItem] whose child is the tallest content any
+  /// of the items can have.
+  ///
+  /// The prototype's height is only known after the menu has been laid out,
+  /// but the initial scroll offset of the menu is computed before that. If
+  /// there isn't enough vertical room for the menu and the prototype's height
+  /// differs from [itemHeight] (or from [kMinInteractiveDimension] when
+  /// [itemHeight] is null), the initial scroll offset may not align the
+  /// selected item with the dropdown button. Use [itemExtent] when the height
+  /// is known in advance.
+  ///
+  /// Only one of [itemExtent] and [prototypeItem] can be specified.
+  final Widget? prototypeItem;
 
   /// The width of the menu.
   ///
@@ -1534,6 +1584,8 @@ class _DropdownButtonState<T> extends State<DropdownButton<T>> with WidgetsBindi
       style: _textStyle!,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
       itemHeight: widget.itemHeight,
+      itemExtent: widget.itemExtent,
+      prototypeItem: widget.prototypeItem,
       menuWidth: widget.menuWidth,
       dropdownColor: widget.dropdownColor,
       menuMaxHeight: widget.menuMaxHeight,
@@ -1879,6 +1931,8 @@ class DropdownButtonFormField<T> extends FormField<T> {
     bool isDense = true,
     bool isExpanded = false,
     double? itemHeight,
+    double? itemExtent,
+    Widget? prototypeItem,
     Color? focusColor,
     FocusNode? focusNode,
     bool autofocus = false,
@@ -1914,6 +1968,10 @@ class DropdownButtonFormField<T> extends FormField<T> {
          'with the same value',
        ),
        assert(itemHeight == null || itemHeight >= kMinInteractiveDimension),
+       assert(
+         itemExtent == null || prototypeItem == null,
+         'You can only pass one of itemExtent and prototypeItem.',
+       ),
        assert(
          errorBuilder == null || decoration?.errorText == null,
          'Declaring both errorBuilder and decoration.errorText is not supported.',
@@ -1980,6 +2038,8 @@ class DropdownButtonFormField<T> extends FormField<T> {
                  isDense: isDense,
                  isExpanded: isExpanded,
                  itemHeight: itemHeight,
+                 itemExtent: itemExtent,
+                 prototypeItem: prototypeItem,
                  focusColor: focusColor,
                  focusNode: focusNode,
                  autofocus: autofocus,

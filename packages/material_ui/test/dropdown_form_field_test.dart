@@ -1529,4 +1529,103 @@ void main() {
       SystemMouseCursors.cell,
     );
   });
+
+  group('DropdownButtonFormField itemExtent and prototypeItem', () {
+    Widget buildField({
+      required int value,
+      int count = 4,
+      double? itemExtent,
+      Widget? prototypeItem,
+    }) {
+      return MaterialApp(
+        home: Material(
+          child: Align(
+            child: DropdownButtonFormField<int>(
+              initialValue: value,
+              itemExtent: itemExtent,
+              prototypeItem: prototypeItem,
+              onChanged: (int? newValue) {},
+              items: List<DropdownMenuItem<int>>.generate(
+                count,
+                (int i) => DropdownMenuItem<int>(value: i, child: Text('$i')),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    Finder menuItemButtons() {
+      return find.descendant(of: find.byType(ListView), matching: find.byType(InkWell));
+    }
+
+    testWidgets('itemExtent sets the extent of the menu items', (WidgetTester tester) async {
+      await tester.pumpWidget(buildField(value: 1, itemExtent: 80.0));
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+
+      final ListView list = tester.widget<ListView>(find.byType(ListView));
+      expect(list.itemExtent, 80.0);
+      expect(list.prototypeItem, isNull);
+      expect(menuItemButtons(), findsNWidgets(4));
+      for (final Element element in tester.elementList(menuItemButtons())) {
+        expect(element.size!.height, 80.0);
+      }
+    });
+
+    testWidgets('prototypeItem sets the extent of the menu items', (WidgetTester tester) async {
+      const prototype = DropdownMenuItem<int>(
+        value: -1,
+        child: SizedBox(height: 90.0, child: Text('prototype')),
+      );
+      await tester.pumpWidget(buildField(value: 1, prototypeItem: prototype));
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+
+      final ListView list = tester.widget<ListView>(find.byType(ListView));
+      expect(list.prototypeItem, same(prototype));
+      expect(list.itemExtent, isNull);
+      expect(menuItemButtons(), findsNWidgets(4));
+      for (final Element element in tester.elementList(menuItemButtons())) {
+        expect(element.size!.height, 90.0);
+      }
+    });
+
+    testWidgets('itemExtent aligns the selected item with the field when the menu scrolls', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(buildField(value: 50, count: 100, itemExtent: 100.0));
+      final double buttonTop = tester.getRect(find.byType(DropdownButton<int>)).top;
+
+      await tester.tap(find.text('50'));
+      await tester.pumpAndSettle();
+
+      final Finder selectedButton = find.ancestor(
+        of: find.text('50').last,
+        matching: menuItemButtons(),
+      );
+      expect(tester.getRect(selectedButton).height, 100.0);
+      expect(tester.getRect(selectedButton).top, buttonTop);
+    });
+
+    testWidgets('itemExtent and prototypeItem cannot both be specified', (
+      WidgetTester tester,
+    ) async {
+      expect(
+        () => DropdownButtonFormField<int>(
+          itemExtent: 60.0,
+          prototypeItem: const SizedBox(height: 60.0),
+          onChanged: (int? newValue) {},
+          items: const <DropdownMenuItem<int>>[],
+        ),
+        throwsA(
+          isA<AssertionError>().having(
+            (AssertionError error) => error.message,
+            'message',
+            'You can only pass one of itemExtent and prototypeItem.',
+          ),
+        ),
+      );
+    });
+  });
 }

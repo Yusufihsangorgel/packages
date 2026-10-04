@@ -4293,6 +4293,164 @@ void main() {
     expect(tester.takeException(), null);
   });
 
+  group('DropdownButton itemExtent and prototypeItem', () {
+    List<DropdownMenuItem<int>> buildItems(int count) {
+      return List<DropdownMenuItem<int>>.generate(
+        count,
+        (int i) => DropdownMenuItem<int>(value: i, child: Text('$i')),
+      );
+    }
+
+    Future<void> pumpDropdown(
+      WidgetTester tester, {
+      required int value,
+      int count = 4,
+      double? itemExtent,
+      Widget? prototypeItem,
+      double? itemHeight = kMinInteractiveDimension,
+    }) {
+      return tester.pumpWidget(
+        MaterialApp(
+          home: Material(
+            child: Align(
+              child: DropdownButton<int>(
+                value: value,
+                itemHeight: itemHeight,
+                itemExtent: itemExtent,
+                prototypeItem: prototypeItem,
+                onChanged: (int? newValue) {},
+                items: buildItems(count),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // The InkWells are the menu items' buttons; the prototype, which is laid out
+    // by the list, is not wrapped in one.
+    Finder menuItemButtons() =>
+        find.descendant(of: find.byType(ListView), matching: find.byType(InkWell));
+
+    double getMenuScroll(WidgetTester tester) {
+      return PrimaryScrollController.of(tester.element(find.byType(ListView))).position.pixels;
+    }
+
+    testWidgets('are null by default and the menu items keep their default height', (
+      WidgetTester tester,
+    ) async {
+      await pumpDropdown(tester, value: 1);
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+
+      final ListView list = tester.widget<ListView>(find.byType(ListView));
+      expect(list.itemExtent, isNull);
+      expect(list.prototypeItem, isNull);
+      expect(menuItemButtons(), findsNWidgets(4));
+      for (final Element element in tester.elementList(menuItemButtons())) {
+        expect(element.size!.height, kMinInteractiveDimension);
+      }
+    });
+
+    testWidgets('itemExtent sets the extent of the menu items', (WidgetTester tester) async {
+      const extent = 80.0;
+      await pumpDropdown(tester, value: 1, itemExtent: extent);
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+
+      final ListView list = tester.widget<ListView>(find.byType(ListView));
+      expect(list.itemExtent, extent);
+      expect(list.prototypeItem, isNull);
+      expect(menuItemButtons(), findsNWidgets(4));
+      for (final Element element in tester.elementList(menuItemButtons())) {
+        expect(element.size!.height, extent);
+      }
+      // The menu is as tall as its items plus the list padding.
+      expect(getMenuRect(tester).height, 4 * extent + kMaterialListPadding.vertical);
+    });
+
+    testWidgets('prototypeItem sets the extent of the menu items', (WidgetTester tester) async {
+      const prototype = DropdownMenuItem<int>(
+        value: -1,
+        child: SizedBox(height: 90.0, child: Text('prototype')),
+      );
+      await pumpDropdown(tester, value: 1, prototypeItem: prototype);
+      await tester.tap(find.text('1'));
+      await tester.pumpAndSettle();
+
+      final ListView list = tester.widget<ListView>(find.byType(ListView));
+      expect(list.prototypeItem, same(prototype));
+      expect(list.itemExtent, isNull);
+      expect(menuItemButtons(), findsNWidgets(4));
+      for (final Element element in tester.elementList(menuItemButtons())) {
+        expect(element.size!.height, 90.0);
+      }
+      expect(getMenuRect(tester).height, 4 * 90.0 + kMaterialListPadding.vertical);
+    });
+
+    testWidgets('itemExtent aligns the selected item with the button when the menu scrolls', (
+      WidgetTester tester,
+    ) async {
+      // The default extent of 48.0 is covered by 'Dropdown in middle showing
+      // middle item'. Here the extent is larger, so the initial scroll offset
+      // has to be computed from the extent rather than from the default.
+      const extent = 100.0;
+      await pumpDropdown(tester, value: 50, count: 100, itemExtent: extent);
+      final Rect buttonRect = tester.getRect(find.byType(DropdownButton<int>));
+
+      await tester.tap(find.text('50'));
+      await tester.pumpAndSettle();
+
+      final Rect menuRect = getMenuRect(tester);
+      // The menu is taller than the room it has, so it scrolls.
+      expect(100 * extent + kMaterialListPadding.vertical, greaterThan(menuRect.height));
+      // The selected item starts at the button's top edge.
+      final Finder selectedButton = find.ancestor(
+        of: find.text('50').last,
+        matching: menuItemButtons(),
+      );
+      expect(tester.getRect(selectedButton).top, buttonRect.top);
+      expect(tester.getRect(selectedButton).height, extent);
+    });
+
+    testWidgets('prototypeItem as tall as the default items keeps the selected item aligned', (
+      WidgetTester tester,
+    ) async {
+      await pumpDropdown(
+        tester,
+        value: 50,
+        count: 100,
+        prototypeItem: const DropdownMenuItem<int>(value: -1, child: Text('prototype')),
+      );
+      await tester.tap(find.text('50'));
+      await tester.pumpAndSettle();
+
+      // Same offset as 'Dropdown in middle showing middle item'.
+      expect(getMenuScroll(tester), 2180.0);
+    });
+
+    testWidgets('itemExtent and prototypeItem cannot both be specified', (
+      WidgetTester tester,
+    ) async {
+      expect(
+        () => DropdownButton<int>(
+          value: 1,
+          itemExtent: 60.0,
+          prototypeItem: const SizedBox(height: 60.0),
+          onChanged: (int? newValue) {},
+          items: buildItems(2),
+        ),
+        throwsA(
+          isA<AssertionError>().having(
+            (AssertionError error) => error.message,
+            'message',
+            'You can only pass one of itemExtent and prototypeItem.',
+          ),
+        ),
+      );
+    });
+  });
+
   testWidgets('BorderRadius property works properly for DropdownButtonFormField', (
     WidgetTester tester,
   ) async {
