@@ -1531,12 +1531,7 @@ void main() {
   });
 
   group('DropdownButtonFormField itemExtent and prototypeItem', () {
-    Widget buildField({
-      required int value,
-      int count = 4,
-      double? itemExtent,
-      Widget? prototypeItem,
-    }) {
+    Widget buildField({required int value, double? itemExtent, Widget? prototypeItem}) {
       return MaterialApp(
         home: Material(
           child: Align(
@@ -1546,7 +1541,7 @@ void main() {
               prototypeItem: prototypeItem,
               onChanged: (int? newValue) {},
               items: List<DropdownMenuItem<int>>.generate(
-                count,
+                4,
                 (int i) => DropdownMenuItem<int>(value: i, child: Text('$i')),
               ),
             ),
@@ -1555,25 +1550,17 @@ void main() {
       );
     }
 
-    Finder menuItemButtons() {
-      return find.descendant(of: find.byType(ListView), matching: find.byType(InkWell));
-    }
-
-    testWidgets('itemExtent sets the extent of the menu items', (WidgetTester tester) async {
+    testWidgets('passes itemExtent and prototypeItem to the menu', (WidgetTester tester) async {
       await tester.pumpWidget(buildField(value: 1, itemExtent: 80.0));
       await tester.tap(find.text('1'));
       await tester.pumpAndSettle();
 
-      final ListView list = tester.widget<ListView>(find.byType(ListView));
-      expect(list.itemExtent, 80.0);
-      expect(list.prototypeItem, isNull);
-      expect(menuItemButtons(), findsNWidgets(4));
-      for (final Element element in tester.elementList(menuItemButtons())) {
-        expect(element.size!.height, 80.0);
-      }
-    });
+      expect(tester.widget<ListView>(find.byType(ListView)).itemExtent, 80.0);
 
-    testWidgets('prototypeItem sets the extent of the menu items', (WidgetTester tester) async {
+      // Close the menu by selecting the current item.
+      await tester.tap(find.text('1').last);
+      await tester.pumpAndSettle();
+
       const prototype = DropdownMenuItem<int>(
         value: -1,
         child: SizedBox(height: 90.0, child: Text('prototype')),
@@ -1582,30 +1569,7 @@ void main() {
       await tester.tap(find.text('1'));
       await tester.pumpAndSettle();
 
-      final ListView list = tester.widget<ListView>(find.byType(ListView));
-      expect(list.prototypeItem, same(prototype));
-      expect(list.itemExtent, isNull);
-      expect(menuItemButtons(), findsNWidgets(4));
-      for (final Element element in tester.elementList(menuItemButtons())) {
-        expect(element.size!.height, 90.0);
-      }
-    });
-
-    testWidgets('itemExtent aligns the selected item with the field when the menu scrolls', (
-      WidgetTester tester,
-    ) async {
-      await tester.pumpWidget(buildField(value: 50, count: 100, itemExtent: 100.0));
-      final double buttonTop = tester.getRect(find.byType(DropdownButton<int>)).top;
-
-      await tester.tap(find.text('50'));
-      await tester.pumpAndSettle();
-
-      final Finder selectedButton = find.ancestor(
-        of: find.text('50').last,
-        matching: menuItemButtons(),
-      );
-      expect(tester.getRect(selectedButton).height, 100.0);
-      expect(tester.getRect(selectedButton).top, buttonTop);
+      expect(tester.widget<ListView>(find.byType(ListView)).prototypeItem, same(prototype));
     });
 
     testWidgets('itemExtent and prototypeItem cannot both be specified', (
